@@ -1,0 +1,19 @@
+#!/bin/bash
+
+domain=$1
+filename=$2
+
+if [ -z "$1" ]; then
+echo "Error: Missing argument 1 - Domain to be backed up"
+exit
+fi
+
+if [ -z "$2" ]; then
+echo "Error: Missing argument 2 - Backup name"
+exit
+fi
+
+sh backupdb $domain $filename
+sh backupzip $domain $filename
+
+echo "Bacup of $domain has completed."

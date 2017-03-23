@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# one argument: the directory of a wp-config.php file
+domain=$1
+filename=$2
+
+if [ -z "$1" ]; then
+echo "Error: Missing argument 1 - Domain to be backed up"
+exit
+fi
+
+if [ -z "$2" ]; then
+echo "Error: Missing argument 2 - Backup name"
+exit
+fi
+
+thedir=/var/www/vhosts/$1/
+
+if [ ! -d "$thedir" ]; then
+echo "Error: '$thedir' not found."
+exit
+fi
+
+if [ -d "$thedir/httpdocs/" ]; then
+thedir=/var/www/vhosts/$1/httpdocs/
+fi
+
+
+wpconfig=$thedir/wp-config.php
+
+if [ ! -f "$wpconfig" ]; then
+wpconfig=$thedir/nonpayment-backup/wp-config.php
+fi
+
+if [ ! -f "$wpconfig" ]; then
+echo "Error: '$wpconfig' not found."
+exit
+fi
+
+db=`sed -n -e "s/^define( *[\"']DB_NAME', *'\([^']*\)'.*/\1/p" < $wpconfig`
+if [ -z $db ]; then
+echo "Error: Database name not found in '$wpconfig'."
+exit
+fi
+
+user=`sed -n -e "s/^define( *'DB_USER', *'\([^']*\)'.*/\1/p" < $wpconfig`
+if [ -z $db ]; then
+echo "Error: Database user not found in '$wpconfig'."
+exit
+fi
+
+pw=`sed -n -e "s/^define( *'DB_PASSWORD', *'\([^']*\)'.*/\1/p" < $wpconfig`
+if [ -z $db ]; then
+echo "Error: Databaseabase credentials not found in '$wpconfig'."
+exit
+fi
+
+if [ ! -d "./backups/$filename" ]; then
+mkdir ./backups/$filename
+fi
+
+mysqldump --password=$pw --user=$user $db > ./backups/$filename/db.sql
+zip ./backups/$filename/db.sql.zip ./backups/$filename/db.sql
+rm -f ./backups/$filename/db.sql
